@@ -8,9 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = ZooniverseData::VERSION
   spec.authors       = ['Michael Parrish']
   spec.email         = ['michael@zooniverse.org']
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
-  spec.homepage      = ''
+  spec.summary       = 'Zooniverse data library'
+  spec.homepage      = 'https://github.com/zooniverse/zooniverse_data'
   spec.license       = 'MIT'
   
   spec.files         = `git ls-files -z`.split("\x0")
@@ -19,5 +18,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
   
   spec.add_development_dependency 'bundler', '~> 1.5'
-  spec.add_development_dependency 'rake'
+  spec.add_development_dependency 'rake', '10.1.0'
+  spec.add_runtime_dependency 'fastimage', '1.6.0'
+  spec.required_ruby_version = '>= 2.0.0'
 end
