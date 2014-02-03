@@ -12,7 +12,8 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/zooniverse/zooniverse_data'
   spec.license       = 'MIT'
   
-  spec.files         = `git ls-files -z`.split("\x0")
+  ignored_paths      = %w(manifests data).join '|'
+  spec.files         = `git ls-files -z`.split("\x0").reject{ |f| f =~ /^(#{ ignored_paths })/ }
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
@@ -20,5 +21,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'bundler', '~> 1.5'
   spec.add_development_dependency 'rake', '10.1.0'
   spec.add_runtime_dependency 'fastimage', '1.6.0'
+  spec.add_runtime_dependency 'aws-sdk', '1.30.0'
   spec.required_ruby_version = '>= 2.0.0'
 end

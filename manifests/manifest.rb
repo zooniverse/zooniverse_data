@@ -1,0 +1,103 @@
+$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
+require 'json'
+require 'active_support'
+require 'active_support/core_ext'
+require 'zooniverse_data'
+require 'aws-sdk'
+
+module Manifest
+  extend ActiveSupport::Concern
+  include ZooniverseData::Helpers::Transport
+  
+  included do
+    attr_accessor :output
+  end
+  
+  module ClassMethods
+    def project_name
+      name.underscore
+    end
+    
+    def create(*args)
+      manifest = new(*args)
+      manifest.output = []
+      manifest.prepare
+      manifest.write
+      manifest.upload_file
+    end
+  end
+  
+  def project_name
+    self.class.project_name
+  end
+  
+  def write
+    File.open(output_path, 'w') do |out|
+      out.puts JSON.dump output
+    end
+  end
+  
+  def upload_file
+    path = upload from: output_path, to: "#{ project_name }_manifest.json", content_type: 'application/json'
+    puts "Uploaded to #{ bucket.url }#{ path }"
+  end
+  
+  def input_path
+    "#{ data_path }/#{ project_name }"
+  end
+  
+  def output_path
+    "#{ data_path }/#{ project_name }_manifest.json"
+  end
+  
+  def data_path
+    File.expand_path("../../data", __FILE__)
+  end
+  
+  def load_json(file)
+    JSON.load File.read file
+  end
+  
+  def files(type: nil)
+    type = ".#{ type }" if type
+    Dir["#{ input_path }/**/*#{ type }"]
+  end
+  
+  def each_file(type: nil)
+    files(type: type).each do |path|
+      yield path
+    end
+  end
+  
+  def subject(location: location, coords: [], metadata: { }, group_name: nil)
+    hash = {
+      type: 'subject',
+      coords: coords,
+      location: location,
+      metadata: metadata
+    }
+    hash[:group_name] = group_name if group_name
+    self.output << hash
+  end
+  
+  def group(name: name, type: nil, categories: [], metadata: { }, parent_group_name: nil)
+    hash = {
+      type: 'group',
+      name: name,
+      categories: categories,
+      metadata: metadata
+    }
+    hash[:group_type] = type if type
+    hash[:group_name] = group_name if group_name
+    hash[:parent_group_name] = parent_group_name if parent_group_name
+    self.output << hash
+  end
+  
+  def bucket_name
+    'zooniverse-data'
+  end
+  
+  def bucket_path
+    "project_data/#{ project_name }"
+  end
+end
