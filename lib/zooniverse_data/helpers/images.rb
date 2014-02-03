@@ -157,6 +157,10 @@ module ZooniverseData
         Converter.new path: path, remove_original: remove_original, optimize: optimize
       end
       
+      def invert_image(path, remove_original: false, optimize: true)
+        convert_image(path, remove_original: remove_original).invert.write_to prefix: 'inverted'
+      end
+      
       def convert_to_jpeg(path, remove_original: true, optimize: true)
         _simple_convert path, 'jpg', remove_original: remove_original, optimize: optimize
       end
