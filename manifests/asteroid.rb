@@ -23,7 +23,7 @@ class Asteroid
           list.select{ |item| item['crop'] == entry['crop'] }.first['scaled_path']
         end
         
-        locations = locations.collect{ |file| url_of file }
+        locations = locations.collect{ |file| url_of File.basename(file) }
         
         metadata = {
           id: id,
@@ -36,10 +36,6 @@ class Asteroid
         subject location: locations, metadata: metadata
       end
     end
-  end
-  
-  def url_of(file)
-    "http://s3.amazonaws.com/zooniverse-data/project_data/asteroid/#{ File.basename(file) }"
   end
   
   def parse_filename(file)

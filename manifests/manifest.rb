@@ -11,6 +11,7 @@ module Manifest
   
   included do
     attr_accessor :output
+    attr_accessor :_groups
   end
   
   module ClassMethods
@@ -20,6 +21,7 @@ module Manifest
     
     def create(*args)
       manifest = new(*args)
+      manifest._groups = { }
       manifest.output = []
       manifest.prepare
       manifest.write
@@ -58,6 +60,10 @@ module Manifest
     JSON.load File.read file
   end
   
+  def file_named(name)
+    Dir["#{ input_path }/**/#{ name }"].first
+  end
+  
   def files(type: nil)
     type = ".#{ type }" if type
     Dir["#{ input_path }/**/*#{ type }"]
@@ -81,6 +87,7 @@ module Manifest
   end
   
   def group(name: name, type: nil, categories: [], metadata: { }, parent_group_name: nil)
+    return _groups[name] if _groups[name]
     hash = {
       type: 'group',
       name: name,
@@ -88,8 +95,8 @@ module Manifest
       metadata: metadata
     }
     hash[:group_type] = type if type
-    hash[:group_name] = group_name if group_name
     hash[:parent_group_name] = parent_group_name if parent_group_name
+    _groups[name] = hash
     self.output << hash
   end
   
@@ -99,5 +106,9 @@ module Manifest
   
   def bucket_path
     "project_data/#{ project_name }"
+  end
+  
+  def url_of(file)
+    "http://s3.amazonaws.com/zooniverse-data/project_data/#{ project_name }/#{ file }"
   end
 end
