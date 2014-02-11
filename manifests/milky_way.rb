@@ -10,7 +10,7 @@ class MilkyWay
       coords = file_name.match(/\w*?([\d\.]+)((\-|\+)[\d\.]+)\w*?/)[1..2].collect &:to_f
       
       group name: group_name
-      subject location: url_of(file), coords: coords, metadata: { size: size, file_name: file_name }
+      subject group_name: group_name, location: url_of(file.gsub('+', '%2B')), coords: coords, metadata: { size: size, file_name: file_name }
     end
   end
 end
