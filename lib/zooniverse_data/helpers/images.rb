@@ -72,15 +72,26 @@ module ZooniverseData
           self.flags = []
         end
         
-        def resize(width: width, height: height, type: nil)
+        def command(string)
           tap do
-            resize_type = type ? "#{ type }-resize" : 'resize'
-            self.flags << "-#{ resize_type } #{ width }x#{ height }\!"
+            self.flags << string
           end
         end
         
-        def adaptive_resize(width: width, height: height)
-          resize width: width, height: height, type: 'adaptive'
+        def resize(width: nil, height: nil, force: true, type: nil)
+          tap do
+            resize_type = type ? "#{ type }-resize" : 'resize'
+            
+            if width && height
+              self.flags << "-#{ resize_type } #{ width }x#{ height }#{ force ? '\!' : '' }"
+            elsif width || height
+              self.flags << "-#{ resize_type } #{ [width, height].join('x') }"
+            end
+          end
+        end
+        
+        def adaptive_resize(width: width, height: height, force: true)
+          resize width: width, height: height, type: 'adaptive', force: force
         end
         
         def percentage_resize(percentage, type: nil)
