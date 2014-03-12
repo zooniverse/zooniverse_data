@@ -23,7 +23,7 @@ class Serengeti
   end
   
   def load_data
-    files = load_json file_named 'season7_sample.json'
+    files = load_json file_named 'season7.json'
     files.each do |hash|
       site, roll = hash['file'].match(/S7\/(\w+)_(\w+)\//)[1..2]
       hash['site'] = site
