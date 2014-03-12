@@ -68,11 +68,11 @@ class Serengeti
           self.grouped_data[id] ||= []
           self.grouped_data[id] << hash
           
-          date = Time.parse hash.fetch('date_time', Time.at(0).to_s)
+          date = Time.parse(hash['date_time'] || Time.at(0).to_s)
           next if date < minimum_date
           
           images[i + 1 .. i + 2].each do |other|
-            other_date = Time.parse other.fetch('date_time', Time.at(0).to_s)
+            other_date = Time.parse(other['date_time'] || Time.at(0).to_s)
             within_range = other_date > date - 1.second && other_date < date + 1.second
             not_source = other['file'] != hash['file']
             
@@ -105,7 +105,8 @@ class Serengeti
       images.each.with_index do |image, i|
         hash[:location] << url_of(image['file'].sub('/home/packerc/shared/S7/', ''))
         hash[:filenames] << File.basename(image['file'])
-        hash[:timestamps] << Time.parse(image['date_time']).utc.as_json
+        timestamp = Time.parse(image['date_time']).utc.as_json rescue nil
+        hash[:timestamps] << timestamp
       end
       
       subject group_name: 'season_7', location: hash[:location], metadata: {
