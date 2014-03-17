@@ -8,8 +8,8 @@ module ZooniverseData
       include Images
     end
     
-    autoload :Base,      'zooniverse_data/helpers/base'
-    autoload :Transport, 'zooniverse_data/helpers/transport'
-    autoload :Images,    'zooniverse_data/helpers/images'
+    require 'zooniverse_data/helpers/base'
+    require 'zooniverse_data/helpers/transport'
+    require 'zooniverse_data/helpers/images'
   end
 end
