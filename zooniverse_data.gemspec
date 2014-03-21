@@ -19,10 +19,10 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
   
   spec.add_development_dependency 'bundler', '~> 1.5'
-  spec.add_development_dependency 'rake', '10.1.0'
+  spec.add_development_dependency 'rake', '~> 10.1.0'
   spec.add_development_dependency 'bson', '1.9.2'
   spec.add_development_dependency 'bson_ext', '1.9.2'
   spec.add_runtime_dependency 'fastimage', '1.6.0'
-  spec.add_runtime_dependency 'aws-sdk', '1.30.0'
+  spec.add_runtime_dependency 'aws-sdk', '~> 1.30.0'
   spec.required_ruby_version = '>= 2.0.0'
 end
