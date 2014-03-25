@@ -4,7 +4,6 @@ module ZooniverseData
       include Helpers
       
       def customize_subject
-        entry.update :$set => { 'metadata.capture_event_id' => entry.product_id.to_s }
         new_locations = {
           'standard' => [],
           'thumbnail' => [],
