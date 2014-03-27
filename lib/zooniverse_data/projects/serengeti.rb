@@ -29,7 +29,6 @@ module ZooniverseData
       
       def converter_for(path, type: type, max_size: max_size)
         convert_image(path, remove_original: false)
-          .command('-gravity South -chop 0x100')
           .resize(width: max_size, height: max_size, force: false)
           .quality(80)
           .write_to(prefix: type)
