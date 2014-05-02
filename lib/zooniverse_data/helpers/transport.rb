@@ -23,7 +23,7 @@ module ZooniverseData
       end
       
       def upload(from: nil, to: nil, content_type: nil)
-        content_type ||= `file -bI '#{ from }'`.chomp.split(';').first
+        content_type ||= `file --brief --mime '#{ from }'`.chomp.split(';').first
         path = [bucket_path, to].compact.join('/').gsub(/^\//, '').gsub '//', '/'
         obj = bucket.objects[path]
         
