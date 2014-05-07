@@ -2,7 +2,7 @@ require_relative 'manifest'
 
 class Penguin
   include Manifest
-  
+
   def prepare
     # penguin_files.json loads from ./data/penguin/penguin_files.json
     load_json(file_named('penguin_files.json')).each do |hash|
@@ -14,7 +14,7 @@ class Penguin
         index: hash['index'],
         timestamp: hash['timestamp'],
         lunar_phase: hash['lunar_phase'],
-        temperature: hash['temperature']
+        temperature_f: hash['temperature_f']
       }
     end
   end

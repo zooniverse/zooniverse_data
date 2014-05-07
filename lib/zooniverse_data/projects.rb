@@ -6,5 +6,6 @@ module ZooniverseData
     require 'zooniverse_data/projects/milky_way'
     require 'zooniverse_data/projects/serengeti'
     require 'zooniverse_data/projects/sunspot'
+    require 'zooniverse_data/projects/penguin'
   end
 end
