@@ -1,165 +1,127 @@
 require_relative 'manifest'
+Time.zone = 'UTC'
 
 class Sunspot
   include Manifest
-  attr_accessor :columns, :types, :data, :angles, :context_images
+  attr_accessor :cutout_data, :flare_data
   
   def initialize
-    self.columns = []
-    self.types = {
-      sszn: :to_s,
-      noaa: :to_i,
-      n_nar: :to_i,
-      filename: :to_s,
-      date: :to_time,
-      hgpos: :from_csv_to_f_a,
-      hcpos: :from_csv_to_f_a,
-      pxpos: :from_csv_to_f_a,
-      hale: :to_s,
-      zurich: :to_s,
-      area: :to_f,
-      areafrac: :to_f,
-      areathesh: :to_f,
-      flux: :to_f,
-      fluxfrac: :to_f,
-      bipolesep: :to_f,
-      c1flr24hr: :to_bool,
-      m1flr12hr: :to_bool,
-      m5flr12hr: :to_bool,
-      allnoaa: :to_i
-    }
+    self.cutout_data = { }
+    self.flare_data = { }
   end
   
   def prepare
-    load_data
-    
-    %w(bin_0_20 bin_20_40 bin_40_50 bin_50_60 bin_60_65 bin_65_90).each do |bin|
-      group name: bin
-    end
-    
-    data.collect{ |row| parse(row) }.compact.each do |hash|
-      location = { standard: url_of("cutouts/#{ hash[:file_name] }") }
-      context_image = context_images[hash[:sszn].to_s]
-      location[:context] = context_image ? url_of(context_image) : nil
-      
-      subject coords: hash[:hgpos], location: location, metadata: metadata_for(hash), group_name: group_name_of(hash)
+    load_cutout_data
+    load_flare_data
+    load_json(file_named('launch2_list.json')).each_pair do |sszn, hash|
+      cutout = cutout_data[sszn]
+      subject coords: cutout[:hgpos], location: location_for(hash), metadata: metadata_for(sszn, hash)
     end
   end
   
-  def load_data
-    file_list = load_json file_named 'launch1_list.json'
-    self.context_images = { }
-    file_list.select{ |f| f =~ /^fulldisk/ }.each do |file|
-      id = file.match(/fulldisk_(\d+)\.eps/)[1]
-      context_images[id] = file
-    end
-    
-    self.data = File.read(file_named('smart_cutouts_metadata_allclear.beta.1.20131127_0159.txt')).split "\n"
-    self.data.shift while data.first.match(/^#/)
-    
-    angle_data = File.read(file_named('smart_cutouts_metadata_allclear.beta.1.20131127_0159_angle-to-dc.txt')).split "\n"
-    angle_data.shift while angle_data.first.match(/^#/)
-    
-    self.angles = { }
-    angle_data.each do |row|
-      sszn, coords, angle = row.split(";").collect{ |r| r.strip }
-      self.angles[sszn] = angle.to_f
+  def location_for(hash)
+    { standard: url_of(hash['cutout']) }.tap do |location|
+      location[:context] = url_of(hash['fulldisk']) if hash['fulldisk']
     end
   end
   
-  def metadata_for(hash)
+  def metadata_for(sszn, hash)
+    cutout = cutout_data[sszn]
+    flare = flare_data[sszn]
     {
-      sszn: hash[:sszn],
-      noaa: hash[:noaa],
-      n_nar: hash[:n_nar],
-      filename: hash[:filename],
-      date: hash[:date],
-      hcpos: hash[:hcpos],
-      pxpos: hash[:pxpos],
-      hale: hash[:hale],
-      zurich: hash[:zurich],
-      area: hash[:area],
-      areafrac: hash[:areafrac],
-      areathesh: hash[:areathesh],
-      flux: hash[:flux],
-      fluxfrac: hash[:fluxfrac],
-      bipolesep: hash[:bipolesep],
-      c1flr24hr: hash[:c1flr24hr],
-      m1flr12hr: hash[:m1flr12hr],
-      m5flr12hr: hash[:m5flr12hr],
-      angle: hash[:angle]
+      sszn: cutout[:sszn],
+      arid: cutout[:arid],
+      filename: cutout[:datafile],
+      date: cutout[:date],
+      hcpos: cutout[:hcpos],
+      pxpos: cutout[:pxpos],
+      pxscl_hpc2stg: cutout[:pxscl_hpc2stg],
+      deg2dc: cutout[:deg2dc],
+      npsl: cutout[:npsl],
+      bmax: cutout[:bmax],
+      area: cutout[:area],
+      areafrac: cutout[:areafrac],
+      areathesh: cutout[:areathesh],
+      flux: cutout[:flux],
+      fluxfrac: cutout[:fluxfrac],
+      bipolesep: cutout[:bipolesep],
+      psllength: cutout[:psllength],
+      pslcurvature: cutout[:pslcurvature],
+      rvalue: cutout[:rvalue],
+      wlsg: cutout[:wlsg],
+      posstatus: cutout[:posstatus],
+      magstatus: cutout[:magstatus],
+      detstatus: cutout[:detstatus],
+      sszstatus: cutout[:sszstatus],
+      c1flr24hr: flare[:c1flr24hr],
+      c5flr24hr: flare[:c5flr24hr],
+      m1flr24hr: flare[:m1flr24hr],
+      m5flr24hr: flare[:m5flr24hr],
+      c1flr12hr: flare[:c1flr12hr],
+      c5flr12hr: flare[:c5flr12hr],
+      m1flr12hr: flare[:m1flr12hr],
+      m5flr12hr: flare[:m5flr12hr]
     }
   end
   
-  def group_name_of(hash)
-    if hash[:angle] < 20
-      'bin_0_20'
-    elsif hash[:angle] < 40
-      'bin_20_40'
-    elsif hash[:angle] < 50
-      'bin_40_50'
-    elsif hash[:angle] < 60
-      'bin_50_60'
-    elsif hash[:angle] < 65
-      'bin_60_65'
-    else
-      'bin_65_90'
+  def load_cutout_data
+    rows = File.read(file_named('smart_cutouts_metadata_smart2.gamma.1.combined.txt')).split "\n"
+    rows.shift while rows.first.match(/^#/)
+    columns = %w(sszn datafile arid date hgpos hcpos pxpos pxscl_hpc2stg deg2dc npsl bmax area areafrac areathresh flux fluxfrac bipolesep psllength pslcurvature rvalue wlsg posstatus magstatus detstatus sszstatus)
+    
+    rows.each do |row|
+      hash = Hash[*columns.zip(row.split(';').collect(&:strip)).flatten]
+      sszn = '%06d' % hash['sszn'].to_i
+      self.cutout_data[sszn] = {
+        sszn: sszn,
+        datafile: hash['datafile'],
+        arid: hash['arid'],
+        date: Time.zone.parse(hash['date']).as_json,
+        hgpos: hash['hgpos'].split(',').collect(&:to_f),
+        hcpos: hash['hcpos'].split(',').collect(&:to_f),
+        pxpos: hash['pxpos'].split(',').collect(&:to_f),
+        pxscl_hpc2stg: hash['pxscl_hpc2stg'].to_f,
+        deg2dc: hash['deg2dc'].to_f,
+        npsl: hash['npsl'].to_i,
+        bmax: hash['bmax'].to_f,
+        area: hash['area'].to_f,
+        areafrac: hash['areafrac'].to_f,
+        areathresh: hash['areathresh'].to_f,
+        flux: hash['flux'].to_f,
+        fluxfrac: hash['fluxfrac'].to_f,
+        bipolesep: hash['bipolesep'].to_f,
+        psllength: hash['psllength'].to_f,
+        pslcurvature: hash['pslcurvature'].to_f,
+        rvalue: hash['rvalue'].to_f,
+        wlsg: hash['wlsg'].to_f,
+        posstatus: hash['posstatus'].to_i,
+        magstatus: hash['magstatus'].to_i,
+        detstatus: hash['detstatus'].to_i,
+        sszstatus: hash['sszstatus'].to_i
+      }
     end
   end
   
-  def parse(row)
-    Hash[ *types.keys.zip(row.split(';')).flatten ].tap do |hash|
-      hash.each_pair do |key, value|
-        format = types[key.to_sym]
-        hash[key] = if value.respond_to?(format)
-          value.send format
-        else
-          send format, value
-        end
-      end
+  def load_flare_data
+    rows = File.read(file_named('smart_flare_metadata_smart2.gamma.1.combined.txt')).split "\n"
+    rows.shift while rows.first.match(/^#/)
+    columns = %w(sszn datafile date c1flr24hr c5flr24hr m1flr24hr m5flr24hr c1flr12hr c5flr12hr m1flr12hr m5flr12hr)
+    
+    rows.each do |row|
+      hash = Hash[*columns.zip(row.split(';').collect(&:strip)).flatten]
+      sszn = '%06d' % hash['sszn'].to_i
       
-      # actual hale: ["", "alpha", "alphagamma", "alphagamma-delta", "beta", "beta-gamma", "beta-gamma-delta", "betaa", "betaagamma", "betaagamma-delta", "x"]
-      # should be: alpha, beta, beta-gamma, beta-gamma-delta, beta-delta (rare), gamma (rare), or an empty string
-      #   least complex: alpha
-      #   medium complex: beta
-      #   most complex: beta-gamma, gamma, beta-gamma-delta, delta
-      
-      hash[:hale] = case hash[:hale]
-      when 'alpha'
-        'alpha'
-      when 'alphagamma'
-        'gamma'
-      when 'alphagamma-delta'
-        'gamma-delta'
-      when 'beta', 'betaa'
-        'beta'
-      when 'beta-gamma', 'betaagamma'
-        'beta-gamma'
-      when 'beta-gamma-delta', 'betaagamma-delta'
-        'beta-gamma-delta'
-      else
-        'unknown'
-      end
-      
-      hash[:file_name] = "ar_cutout_#{ hash[:sszn] }.eps"
-      hash[:angle] = angles[hash[:sszn]]
+      self.flare_data[sszn] = {
+        c1flr24hr: hash['c1flr24hr'] == '1',
+        c5flr24hr: hash['c5flr24hr'] == '1',
+        m1flr24hr: hash['m1flr24hr'] == '1',
+        m5flr24hr: hash['m5flr24hr'] == '1',
+        c1flr12hr: hash['c1flr12hr'] == '1',
+        c5flr12hr: hash['c5flr12hr'] == '1',
+        m1flr12hr: hash['m1flr12hr'] == '1',
+        m5flr12hr: hash['m5flr12hr'] == '1'
+      }
     end
-  end
-  
-  def from_csv_to_f_a(text)
-    from_csv_to_a(text).collect &:to_f
-  end
-  
-  def from_csv_to_i_a(text)
-    from_csv_to_a(text).collect &:to_i
-  end
-  
-  def from_csv_to_a(text)
-    text.split ','
-  end
-  
-  def to_bool(text)
-    text == '1'
   end
 end
 
