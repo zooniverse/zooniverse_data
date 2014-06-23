@@ -26,6 +26,7 @@ module Manifest
       manifest.prepare
       manifest.write
       manifest.upload_file
+      manifest
     end
   end
   
