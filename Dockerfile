@@ -9,4 +9,4 @@ RUN apt-get update && apt-get upgrade -y && \
 
 ADD ./ /src/
 
-RUN cd lib && bundle install
+RUN mkdir -p data && cd lib && bundle install
