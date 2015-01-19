@@ -35,7 +35,7 @@ class GenericManifest
   def prepare
     load_csv_image_metadata
 
-    @csv_image_metadata.each do |subject_hash|
+    @csv_image_metadata.each_pair do |subject_key, subject_hash|
       subject location: subject_hash[:location], metadata: subject_hash[:metadata]
     end
   end
