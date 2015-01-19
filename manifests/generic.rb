@@ -15,6 +15,7 @@ class GenericManifest
 
   CSV_FILELIST_NAME = "filelist.csv"
   IMAGE_FILE_REGEX = "\.(jp(e)?g|png)$"
+  SUBJECT_META_REGEX = "(.+\/)*(?<group>.+)\/atlantis(?<view>.+)_(?<key>[0-9]+_[0-9]+)#{IMAGE_FILE_REGEX}"
   PROJECT_DATA_PATH = "project_data"
 
   def initialize
@@ -25,7 +26,7 @@ class GenericManifest
       })
     end
 
-    @csv_image_metadata = {}
+    @csv_image_metadata = Hash.new { |h,k| h[k] = { :location => [], :metadata => {} } }
     @sample = false
     @sample_size = 200
     @header_row = []
@@ -34,9 +35,8 @@ class GenericManifest
   def prepare
     load_csv_image_metadata
 
-    @csv_image_metadata.each_pair do |file_path, metadata|
-      puts file_path
-      subject location: url_of(file_path), metadata: metadata
+    @csv_image_metadata.each do |subject_hash|
+      subject location: subject_hash[:location], metadata: subject_hash[:metadata]
     end
   end
 
@@ -65,10 +65,18 @@ class GenericManifest
       csv_file_data.each do |row|
         row.unshift(nil) if row.length != @header_row.length && row.first.match(/#{IMAGE_FILE_REGEX}/i)
         row = row.map! { |val| val && (val.empty? || val.match(/na/i)) ? nil : val }
-        @csv_image_metadata[row[0]] = {}
-        current_col = 0
+
+        subject_match = row[0].match(/#{SUBJECT_META_REGEX}/)
+
+        @csv_image_metadata[subject_match[:key]][:location].push(url_of(row[0]))
+        @csv_image_metadata[subject_match[:key]][:metadata][:image_metadata] = @csv_image_metadata[subject_match[:key]][:metadata].fetch(:image_metadata, [])
+        @csv_image_metadata[subject_match[:key]][:metadata][:image_metadata].push({ :view => subject_match[:view], :name => row[0], :group => subject_match[:group] })
+
+        # Skip col 0
+        current_col = 1
+        row.shift
         row.each do |col|
-          @csv_image_metadata[row[0]][current_col == 0 ? :path : @header_row[current_col]] = col
+          @csv_image_metadata[subject_match[:key]][:metadata][@header_row[current_col]] = col
           current_col += 1
         end
       end
