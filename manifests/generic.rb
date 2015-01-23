@@ -48,6 +48,9 @@ class GenericManifest
     end
 
     @csv_image_metadata.each_pair do |subject_key, subject_hash|
+      if subject_hash[:location].length == 1
+        subject_hash[:location] = subject_hash[:location][0]
+      end
       subject subject_hash
     end
   end
