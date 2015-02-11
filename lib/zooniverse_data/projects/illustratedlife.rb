@@ -7,8 +7,10 @@ module ZooniverseData
         original = convert_image(entry.location['standard']).input_image
         original_dims = original.size rescue OpenStruct.new(width: nil, height: nil)
         resized = converter_for(original.path, type: 'standard', max_size: 1400)
+        thumb = converter_for(original.path, type: 'thumbnail', max_size: 400, quality: 50)
         entry.update :$set => {
           'location.standard' => resized,
+          'location.thumb' => thumb,
           'metadata.original_size' => { width: original_dims.width, height: original_dims.height }
         }
       end
