@@ -1,6 +1,6 @@
 module ZooniverseData
   module Projects
-    class IllustratedLife
+    class Illustratedlife
       include Helpers
 
       def customize_subject
