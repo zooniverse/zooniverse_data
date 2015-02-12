@@ -76,9 +76,6 @@ class GenericManifest
 
     def read_group_file_rows(csv_file_data)
       csv_file_data.each do |row|
-        row.unshift(nil) if row.length != @group_header_row.length
-        row = row.map! { |val| val && (val.empty? || val.match(/na/i)) ? nil : val }
-
         group_name = row[0]
         @group_metadata[group_name] = { :metadata => {} }
 
