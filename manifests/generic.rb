@@ -33,6 +33,12 @@ class GenericManifest
       @subject_meta_regex = SUBJECT_META_REGEX
     end
 
+    if ARGV[2]
+      @multifile_metadata_prefix = ARGV[2]
+    else
+      @multifile_metadata_prefix = nil
+    end
+
     @group_metadata = Hash.new { |h,k| h[k] = { :metadata => {} } }
     @group_header_row = []
 
@@ -101,7 +107,7 @@ class GenericManifest
         subject_match = row[0].match(/#{@subject_meta_regex}/)
         @csv_image_metadata[subject_match[:key]][:location].push(url_of(row[0]))
 
-        if subject_match[:group_name]
+        if subject_match.names.include? :group_name
           @csv_image_metadata[subject_match[:key]][:group_name] = subject_match[:group_name]
         end
 
@@ -109,13 +115,27 @@ class GenericManifest
         current_col = 1
         row.shift
         coords = {}
+        metadata = {}
+        multifile_metadata = {}
+
         row.each do |col|
           if @image_header_row[current_col] == 'latitude' or @image_header_row[current_col] == 'longitude'
             coords[@image_header_row[current_col]] = col
           else
-            @csv_image_metadata[subject_match[:key]][:metadata][@image_header_row[current_col]] = col
+            if @multifile_metadata_prefix and @image_header_row[current_col].start_with?("#{@multifile_metadata_prefix}_")
+              multifile_metadata[@image_header_row[current_col].sub(/^#{@multifile_metadata_prefix}_/, '')] = col
+            else
+              metadata[@image_header_row[current_col]] = col
+            end
           end
           current_col += 1
+        end
+
+        @csv_image_metadata[subject_match[:key]][:metadata].merge!(metadata)
+
+        if @multifile_metadata_prefix
+          @csv_image_metadata[subject_match[:key]][:metadata][@multifile_metadata_prefix] = @csv_image_metadata[subject_match[:key]][:metadata].fetch(@multifile_metadata_prefix, [])
+          @csv_image_metadata[subject_match[:key]][:metadata][@multifile_metadata_prefix].push(multifile_metadata)
         end
 
         if coords['latitude'] and coords['longitude']
