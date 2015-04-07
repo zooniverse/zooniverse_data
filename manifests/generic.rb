@@ -107,7 +107,7 @@ class GenericManifest
         subject_match = row[0].match(/#{@subject_meta_regex}/)
         @csv_image_metadata[subject_match[:key]][:location].push(url_of(row[0]))
 
-        if subject_match.names.include? :group_name
+        if subject_match.names.include? 'group_name'
           @csv_image_metadata[subject_match[:key]][:group_name] = subject_match[:group_name]
         end
 
