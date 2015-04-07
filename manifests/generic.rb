@@ -97,7 +97,7 @@ class GenericManifest
 
     def load_image_metadata
       filelist = zooniverse_data_bucket.objects["#{PROJECT_DATA_PATH}/#{project_name}/#{CSV_FILELIST_NAME}"]
-      csv_file_data = CSV.parse(filelist.read)
+      csv_file_data = CSV.parse(filelist.read.unpack('U*').pack('U*'))
       @image_header_row = csv_file_data.shift
       read_image_file_rows(csv_file_data)
     end
