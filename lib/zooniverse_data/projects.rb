@@ -6,6 +6,7 @@ module ZooniverseData
     require 'zooniverse_data/projects/higgs_hunter'
     require 'zooniverse_data/projects/illustratedlife'
     require 'zooniverse_data/projects/milky_way'
+    require 'zooniverse_data/projects/orchid'
     require 'zooniverse_data/projects/penguin'
     require 'zooniverse_data/projects/serengeti'
     require 'zooniverse_data/projects/sunspot'
