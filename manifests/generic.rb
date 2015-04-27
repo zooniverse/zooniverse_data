@@ -104,7 +104,7 @@ class GenericManifest
 
     def read_image_file_rows(csv_file_data)
       csv_file_data.each do |row|
-        subject_match = row[0].match(/#{@subject_meta_regex}/)
+        subject_match = row[0].match(/#{@subject_meta_regex}/i)
         if subject_match.nil?
           puts "WARNING: Invalid file name: #{row[0]}"
           next
