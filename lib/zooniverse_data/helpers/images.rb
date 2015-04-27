@@ -10,7 +10,7 @@ module ZooniverseData
       class Image
         attr_accessor :path, :raise_exceptions
 
-        def initialize(path: path, raise_exceptions: true)
+        def initialize(path: nil, raise_exceptions: true)
           self.path = path
           self.raise_exceptions = raise_exceptions
         end
@@ -77,7 +77,7 @@ module ZooniverseData
         attr_accessor :input_image, :output_image, :flags
         attr_accessor :raise_exceptions, :remove_original, :optimize
 
-        def initialize(path: path, raise_exceptions: true, remove_original: true, optimize: true)
+        def initialize(path: nil, raise_exceptions: true, remove_original: true, optimize: true)
           self.input_image = Image.new path: path, raise_exceptions: raise_exceptions
           self.remove_original = remove_original
           self.optimize = optimize
@@ -102,7 +102,7 @@ module ZooniverseData
           end
         end
 
-        def adaptive_resize(width: width, height: height, force: true)
+        def adaptive_resize(width: nil, height: nil, force: true)
           resize width: width, height: height, type: 'adaptive', force: force
         end
 
@@ -123,13 +123,13 @@ module ZooniverseData
           end
         end
 
-        def crop(width: width, height: height, top: top, left: left)
+        def crop(width: nil, height: nil, top: nil, left: nil)
           tap do
             self.flags << "-crop #{ width }x#{ height }+#{ left }+#{ top } +repage"
           end
         end
 
-        def crop_center(width: width, height: height, top: 0, left: 0)
+        def crop_center(width: nil, height: nil, top: 0, left: 0)
           tap do
             self.flags << "-gravity Center -crop #{ width }x#{ height }+#{ left }+#{ top } +repage"
           end

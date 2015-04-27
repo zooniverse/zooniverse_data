@@ -8,7 +8,7 @@ module ZooniverseData
         attr_accessor :entry
       end
       
-      def customize(manifest: manifest, entry: entry)
+      def customize(manifest: nil, entry: nil)
         self.manifest = manifest
         self.entry = entry
         

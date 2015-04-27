@@ -6,7 +6,7 @@ module ZooniverseData
   end
   self.projects = { }
   
-  def self.dispatch(manifest: manifest, entry: entry)
+  def self.dispatch(manifest: nil, entry: nil)
     klass = self.projects[manifest.project_id]
     
     unless klass

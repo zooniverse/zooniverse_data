@@ -47,7 +47,7 @@ module ZooniverseData
         @bucket_path ||= manifest.project.bucket_path
       end
       
-      def spawn_with_timeout(command: command, timeout: timeout)
+      def spawn_with_timeout(command: nil, timeout: nil)
         pid = Process.spawn command, close_others: true
         
         begin

@@ -22,7 +22,7 @@ module ZooniverseData
           .path
       end
 
-      def converter_for(path, type: type, max_size: max_size)
+      def converter_for(path, type: nil, max_size: nil)
         convert_image(path, remove_original: false)
           .resize(width: max_size, height: max_size, force: false)
           .quality(80)
