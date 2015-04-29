@@ -4,11 +4,22 @@ module ZooniverseData
       include Helpers
 
       def customize_subject
-        original = convert_image(entry.location['standard']).input_image
-        thumb = converter_for(original.path, type: 'thumbnail', max_size: 300, quality: 50)
-        entry.update :$set => {
-          'location.thumb' => thumb,
-        }
+        if entry.location['standard'].is_a?(Array)
+          thumbs = []
+          entry.location['standard'].each do |image|
+            original = convert_image(image).input_image
+            thumbs << converter_for(original.path, type: 'thumbnail', max_size: 300, quality: 50)
+          end
+          entry.update :$set => {
+            'location.thumb' => thumbs,
+          }
+        else
+          original = convert_image(entry.location['standard']).input_image
+          thumb = converter_for(original.path, type: 'thumbnail', max_size: 300, quality: 50)
+          entry.update :$set => {
+            'location.thumb' => thumb,
+          }
+        end
       end
 
       private
