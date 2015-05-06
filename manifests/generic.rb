@@ -1,10 +1,11 @@
 #!/usr/bin/env ruby
 require_relative 'manifest'
 
-require 'aws-sdk'
-require 'json'
-require 'csv'
 require 'active_support'
+require 'aws-sdk'
+require 'csv'
+require 'json'
+require 'optparse'
 require 'pry'
 
 class GenericManifest
@@ -16,7 +17,8 @@ class GenericManifest
   CSV_FILELIST_NAME = "filelist.csv"
   CSV_GROUPLIST_NAME = "grouplist.csv"
   IMAGE_FILE_REGEX = "\.(jp(e)?g|png)$"
-  SUBJECT_META_REGEX = "((?<group_name>[a-zA-Z0-9_-]+)/)(?<key>.+)#{IMAGE_FILE_REGEX}"
+  SUBJECT_META_REGEX = "(?<key>.+)#{IMAGE_FILE_REGEX}"
+  GROUPED_SUBJECT_META_REGEX = "((?<group_name>[a-zA-Z0-9_-]+)/)#{SUBJECT_META_REGEX}"
   PROJECT_DATA_PATH = "project_data"
 
   def initialize
@@ -27,17 +29,34 @@ class GenericManifest
       })
     end
 
-    if ARGV[1]
-      @subject_meta_regex = ARGV[1]
-    else
-      @subject_meta_regex = SUBJECT_META_REGEX
-    end
+    @options = {
+      :groups => false,
+      :subject_meta_regex => SUBJECT_META_REGEX,
+      :multifile_metadata_prefix => nil
+    }
 
-    if ARGV[2]
-      @multifile_metadata_prefix = ARGV[2]
-    else
-      @multifile_metadata_prefix = nil
-    end
+    OptionParser.new do |opts|
+      opts.banner = "Usage: generic.rb [-g] [-r regex] [-m prefix] project_name"
+
+      opts.on('-g', 'Enable grouped subjects') do |g|
+        @options[:groups] = g
+        @options[:subject_meta_regex] = GROUPED_SUBJECT_META_REGEX
+      end
+
+      opts.on('-r regex', String, 'Regex for extracting metadata from subject filenames') do |r|
+        @options[:subject_meta_regex] = r
+      end
+
+      opts.on('-m prefix', String, 'Filelist column prefix for multifile metadata') do |m|
+        @options[:multifile_metadata_prefix] = m
+        puts m
+      end
+
+      opts.on_tail("-h", "--help", "Show this message") do
+        puts opts
+        exit
+      end
+    end.parse!
 
     @group_metadata = Hash.new { |h,k| h[k] = { :metadata => {} } }
     @group_header_row = []
@@ -70,6 +89,10 @@ class GenericManifest
 
   private
     def load_group_metadata
+      if not @options[:groups]
+        return
+      end
+
       begin
         grouplist = zooniverse_data_bucket.objects["#{PROJECT_DATA_PATH}/#{project_name}/#{CSV_GROUPLIST_NAME}"]
         csv_file_data = CSV.parse(grouplist.read)
@@ -104,7 +127,7 @@ class GenericManifest
 
     def read_image_file_rows(csv_file_data)
       csv_file_data.each do |row|
-        subject_match = row[0].match(/#{@subject_meta_regex}/i)
+        subject_match = row[0].match(/#{@options[:subject_meta_regex]}/i)
         if subject_match.nil?
           puts "WARNING: Invalid file name: #{row[0]}"
           next
@@ -126,8 +149,8 @@ class GenericManifest
           if @image_header_row[current_col] == 'latitude' or @image_header_row[current_col] == 'longitude'
             coords[@image_header_row[current_col]] = col
           else
-            if @multifile_metadata_prefix and @image_header_row[current_col].start_with?("#{@multifile_metadata_prefix}_")
-              multifile_metadata[@image_header_row[current_col].sub(/^#{@multifile_metadata_prefix}_/, '')] = col
+            if @options[:multifile_metadata_prefix] and @image_header_row[current_col].start_with?("#{@options[:multifile_metadata_prefix]}_")
+              multifile_metadata[@image_header_row[current_col].sub(/^#{@options[:multifile_metadata_prefix]}_/, '')] = col
             else
               metadata[@image_header_row[current_col]] = col
             end
@@ -137,9 +160,9 @@ class GenericManifest
 
         @csv_image_metadata[subject_match[:key]][:metadata].merge!(metadata)
 
-        if @multifile_metadata_prefix
-          @csv_image_metadata[subject_match[:key]][:metadata][@multifile_metadata_prefix] = @csv_image_metadata[subject_match[:key]][:metadata].fetch(@multifile_metadata_prefix, [])
-          @csv_image_metadata[subject_match[:key]][:metadata][@multifile_metadata_prefix].push(multifile_metadata)
+        if @options[:multifile_metadata_prefix]
+          @csv_image_metadata[subject_match[:key]][:metadata][@options[:multifile_metadata_prefix]] = @csv_image_metadata[subject_match[:key]][:metadata].fetch(@options[:multifile_metadata_prefix], [])
+          @csv_image_metadata[subject_match[:key]][:metadata][@options[:multifile_metadata_prefix]].push(multifile_metadata)
         end
 
         if coords['latitude'] and coords['longitude']
