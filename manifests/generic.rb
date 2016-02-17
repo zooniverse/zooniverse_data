@@ -151,6 +151,8 @@ class GenericManifest
           else
             if @options[:multifile_metadata_prefix] and @image_header_row[current_col].start_with?("#{@options[:multifile_metadata_prefix]}_")
               multifile_metadata[@image_header_row[current_col].sub(/^#{@options[:multifile_metadata_prefix]}_/, '')] = col
+            elsif @options[:groups] and @image_header_row[current_col] == 'group_name'
+              @csv_image_metadata[subject_match[:key]][:group_name] = col
             else
               metadata[@image_header_row[current_col]] = col
             end
