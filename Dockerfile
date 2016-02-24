@@ -1,12 +1,12 @@
 FROM zooniverse/ruby:2.1
 
-ENV DEBIAN_FRONTEND noninteractive
-
 WORKDIR /src/
 
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y git
+RUN apt-get update && apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
 
 ADD ./ /src/
 
-RUN mkdir -p data && cd lib && bundle install
+RUN mkdir -p data
+
+RUN cd lib && bundle install
