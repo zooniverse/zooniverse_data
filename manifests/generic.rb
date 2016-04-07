@@ -49,10 +49,13 @@ class GenericManifest
 
       opts.on('-m prefix', String, 'Filelist column prefix for multifile metadata') do |m|
         @options[:multifile_metadata_prefix] = m
-        puts m
       end
 
+      opts.on('-j prefix', String, 'Prefix for names of columns which are in JSON format') do |m|
+        @options[:json_metadata_prefix] = m
+      end
       opts.on_tail("-h", "--help", "Show this message") do
+
         puts opts
         exit
       end
@@ -151,6 +154,8 @@ class GenericManifest
           else
             if @options[:multifile_metadata_prefix] and @image_header_row[current_col].start_with?("#{@options[:multifile_metadata_prefix]}_")
               multifile_metadata[@image_header_row[current_col].sub(/^#{@options[:multifile_metadata_prefix]}_/, '')] = col
+            elsif @options[:json_metadata_prefix] and @image_header_row[current_col].start_with?("#{@options[:json_metadata_prefix]}_")
+              metadata[@image_header_row[current_col].sub(/^#{@options[:json_metadata_prefix]}_/, '')] = JSON.parse col
             elsif @options[:groups] and @image_header_row[current_col] == 'group_name'
               @csv_image_metadata[subject_match[:key]][:group_name] = col
             else
