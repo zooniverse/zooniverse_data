@@ -1,4 +1,4 @@
-module ZooniverseDaya
+module ZooniverseData
   module Projects
     class Wise
       include Helpers
