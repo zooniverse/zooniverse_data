@@ -12,7 +12,9 @@ module ZooniverseData
           new_locations[image_type] = path
         end
 
-        new_locations['standard'] = new_locations['wise4']
+        if new_locations.key?('wise4')
+          new_locations['standard'] = new_locations['wise4']
+        end
 
         set_location new_locations
       end
