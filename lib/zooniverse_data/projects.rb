@@ -10,6 +10,5 @@ module ZooniverseData
     require 'zooniverse_data/projects/penguin'
     require 'zooniverse_data/projects/serengeti'
     require 'zooniverse_data/projects/sunspot'
-    require 'zooniverse_data/projects/wise'
   end
 end
