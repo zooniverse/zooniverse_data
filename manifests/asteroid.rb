@@ -8,7 +8,10 @@ class Asteroid
   attr_accessor :data, :grouped_images, :ephm_data, :subject_data
   
   def initialize
-    AWS.config access_key_id: ENV['ASTEROID_S3_ACCESS_ID'], secret_access_key: ENV['ASTEROID_SECRET_ACCESS_KEY']
+    Aws.config.update({
+      access_key_id: ENV['ASTEROID_S3_ACCESS_ID'],
+      secret_access_key: ENV['ASTEROID_SECRET_ACCESS_KEY']
+    })
     @ephm_matcher = Regexp.new(/(((?:")([^"]+)"\s*)|((\S+)\s*?))/)
     @coords_matcher = Regexp.new(/->\s*([-\d\.]+)\s+([-\d\.]+)/)
     @base_url = 'http://asteroidzoo.s3.amazonaws.com'
@@ -208,17 +211,12 @@ class Asteroid
   def download(from: nil, to: nil, timeout: 60)
     _with_retries(5) do
       `rm -f '#{ to }'`
-      
-      File.open(to, 'wb') do |out|
-        bucket.objects[from].read do |chunk|
-          out.write chunk
-        end
-      end
+      bucket.object(from).get(response_target: to)
     end
   end
   
   def bucket
-    @bucket ||= AWS::S3.new.buckets[bucket_name]
+    @bucket ||= self.class.s3.bucket(bucket_name)
   end
   
   def bucket_name

@@ -8,7 +8,7 @@ module ZooniverseData
       
       module ClassMethods
         def s3
-          @s3 ||= AWS::S3.new
+          @s3 ||= Aws::S3::Resource.new(region: (ENV['AWS_REGION'] || 'us-east-1'))
         end
       end
       
@@ -25,10 +25,10 @@ module ZooniverseData
       def upload(from: nil, to: nil, content_type: nil)
         content_type ||= `file --brief --mime '#{ from }'`.chomp.split(';').first
         path = [bucket_path, to].compact.join('/').gsub(/^\//, '').gsub '//', '/'
-        obj = bucket.objects[path]
-        
+        obj = bucket.object(path)
+
         _with_retries(20) do
-          obj.write file: from, acl: :public_read, content_type: content_type
+          obj.upload_file(from, acl: 'public-read', content_type: content_type)
           raise 'File not uploaded' unless obj.exists?
         end
         
@@ -36,7 +36,7 @@ module ZooniverseData
       end
       
       def bucket
-        @bucket ||= self.class.s3.buckets[bucket_name]
+        @bucket ||= self.class.s3.bucket(bucket_name)
       end
       
       def bucket_name
