@@ -23,6 +23,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'bson', '1.9.2'
   spec.add_development_dependency 'bson_ext', '1.9.2'
   spec.add_runtime_dependency 'fastimage', '1.6.0'
-  spec.add_runtime_dependency 'aws-sdk', '~>2.3.18'
+  spec.add_runtime_dependency 'aws-sdk', '~> 2.3.18'
   spec.required_ruby_version = '>= 2.0.0'
 end
