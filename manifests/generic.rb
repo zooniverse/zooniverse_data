@@ -23,7 +23,7 @@ class GenericManifest
 
   def initialize
     if ENV['AWS_ACCESS_KEY_ID'] != nil
-      AWS.config({
+      Aws.config.update({
         access_key_id: ENV['AWS_ACCESS_KEY_ID'],
         secret_access_key: ENV['AWS_SECRET_KEY']
       })
@@ -97,9 +97,9 @@ class GenericManifest
       end
 
       begin
-        grouplist = zooniverse_data_bucket.objects["#{PROJECT_DATA_PATH}/#{project_name}/#{CSV_GROUPLIST_NAME}"]
-        csv_file_data = CSV.parse(grouplist.read)
-      rescue AWS::S3::Errors::NoSuchKey
+        grouplist = zooniverse_data_bucket.object("#{PROJECT_DATA_PATH}/#{project_name}/#{CSV_GROUPLIST_NAME}")
+        csv_file_data = CSV.parse(grouplist.get.body.read)
+      rescue Aws::S3::Errors::NoSuchKey
         return
       end
       @group_header_row = csv_file_data.shift
@@ -122,8 +122,8 @@ class GenericManifest
     end
 
     def load_image_metadata
-      filelist = zooniverse_data_bucket.objects["#{PROJECT_DATA_PATH}/#{project_name}/#{CSV_FILELIST_NAME}"]
-      csv_file_data = CSV.parse(filelist.read.unpack('U*').pack('U*'))
+      filelist = zooniverse_data_bucket.object("#{PROJECT_DATA_PATH}/#{project_name}/#{CSV_FILELIST_NAME}")
+      csv_file_data = CSV.parse(filelist.get.body.read.unpack('U*').pack('U*'))
       @image_header_row = csv_file_data.shift
       read_image_file_rows(csv_file_data)
     end
@@ -179,11 +179,11 @@ class GenericManifest
     end
 
     def s3
-      @s3 ||= AWS::S3.new
+      self.class.s3
     end
 
     def zooniverse_data_bucket
-      @zoo_data_bucket ||= s3.buckets['zooniverse-data']
+      @zoo_data_bucket ||= s3.bucket('zooniverse-data')
     end
 end
 
